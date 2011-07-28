@@ -1,0 +1,44 @@
+.\" Kwakd man page
+.\" groff -man -Tascii kwakd.1
+.\"
+
+.TH KWAKD 1 "DECEMBER 2007" Linux "User Manuals"
+.SH NAME
+kwakd \- web server that only serves blank pages 
+.SH SYNOPSIS
+.B kwakd [options]
+.SH DESCRIPTION
+.B kwakd
+is a very small foot print web server that only serves
+blank html pages with content "<html> </html>" regardless
+of what the request is (it may even be invalid).
+.SH OPTIONS
+.TP
+\fB-b, --background\fB
+Background mode. Kwakd will detach from the console and serve requests
+as a background process.
+.TP
+\fB-H, --headers\fB
+Print all client request headers.
+.TP
+\fB-l, --log\fB
+Log all requests to standard output in CLF format.
+.TP
+\fB-p, --port\fB
+Port number to listen for requests.  The default is 8000.
+.TP
+\fB-v, --verbose\fB
+Verbose output.
+.TP
+\fB-q, --quiet\fB
+Suppress any output.
+.TP
+\fB-V, --version\fB
+Print version information and exit.
+.TP
+\fB-h, --help\fB
+Display usage information and exit.
+.SH SEE ALSO 
+
+http://code.google.com/p/kwakd
+

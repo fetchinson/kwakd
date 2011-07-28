@@ -1,0 +1,15 @@
+dnl Autoconf this.
+AC_INIT(kwakd.c)
+AM_CONFIG_HEADER(config.h)
+
+PACKAGE=kwakd
+VERSION=0.2
+
+AM_INIT_AUTOMAKE($PACKAGE, $VERSION)
+AC_PROG_CC
+
+AC_HEADER_STDC
+AC_CHECK_FUNCS(fork)
+
+AC_OUTPUT(Makefile)
+

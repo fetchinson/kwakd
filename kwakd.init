@@ -1,0 +1,69 @@
+#!/bin/sh
+#
+# chkconfig: 3 84 14
+# description: kwakd is a web server that serves a \
+#              blank page for every request
+#
+
+# Source function library.
+. /etc/rc.d/init.d/functions
+
+prog=kwakd
+lockfile=/var/lock/subsys/$prog
+
+RETVAL=0
+
+start() {
+	echo -n $"Starting $prog: "
+	daemon $prog -b -p 80
+	RETVAL=$?
+	echo
+	[ $RETVAL -eq 0 ] && touch $lockfile
+	return $RETVAL
+}
+
+stop() {
+	echo -n $"Stopping $prog: "
+	killproc $prog
+	RETVAL=$?
+	[ $RETVAL -eq 0 ] && rm -f $lockfile
+	echo
+	return $RETVAL
+}
+
+dostatus() {
+	status $prog
+}
+
+restart() {
+	stop
+	start
+}
+
+condrestart() {
+	[ -e $lockfile ] && restart || :
+}
+
+# See how we were called.
+case "$1" in
+  start)
+	start
+	;;
+  stop)
+	stop
+	;;
+  restart|reload)
+	restart
+	;;
+  condrestart)
+	condrestart
+	;;
+  status)
+	dostatus
+	;;
+  *)
+	echo "Usage: $prog {start|stop|restart|reload|condrestart|status}"
+	exit 1
+esac
+
+exit $RETVAL
