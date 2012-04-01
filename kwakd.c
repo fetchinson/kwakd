@@ -28,14 +28,12 @@
 #include <sys/wait.h>
 #include <string.h>
 #include <stdio.h>
-#include <time.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <sys/mman.h>
 #include <signal.h>
 #include <fcntl.h>
 #include <sys/socket.h>
-#include <time.h>
 #include <netdb.h>
 #include <arpa/inet.h>
 #include <netinet/in.h>
@@ -52,8 +50,6 @@
 int verbose = 0;        /* verbose output to stdout */
 int quiet = 0;          /* suppress any output */
 int background = 0;     /* go to background */
-int print_headers = 0;	/* print headers to stdout */
-int loglevel = 0;       /* log messages to stdout */
 int sockfd = -1;
 
 static void help( void )
@@ -62,8 +58,6 @@ static void help( void )
     printf( "  Serve a blank html page for any request\n\n" );
     printf( "  -b, --background     background mode (disables console output, and allows\n" );
     printf( "                       multiple requests to be served simultaneously)\n" );
-    printf( "  -H, --headers        print out all client request headers\n" );
-    printf( "  -l, --log            log all requests to standard output\n" );
     printf( "  -p, --port           port to listen for requests on, defaults to 8000\n" );
     printf( "  -v, --verbose        verbose output\n" );
     printf( "  -q, --quiet          suppress any output\n" );
@@ -72,13 +66,10 @@ static void help( void )
 }
 
 /* prototypes */
-static void handle_connection( int fd, struct sockaddr_in *remote );
-static void loghit( char *req, char *referrer, char *ua, int code, int size, struct sockaddr_in *remote );
+static void handle_connection( int fd );
+static void handle_request( int fd );
 static void logmessage( int level, char *message );
-static void handle_request( int fd, struct sockaddr_in *remote );
 static void sigcatch( int signal );
-static void *smalloc( size_t size );
-static char *curtime( void );
 
 int main( int argc, char *argv[] )
 {
@@ -102,18 +93,10 @@ int main( int argc, char *argv[] )
 	    help(  );
 	    exit( 0 );
 	}
-	else if( ( strcmp( argv[i], "-H" ) == 0 ) || ( strcmp( argv[i], "--headers" ) == 0 ) )
-	{
-	    print_headers = 1;
-	}
 	else if( ( strcmp( argv[i], "-p" ) == 0 ) || ( strcmp( argv[i], "--port" ) == 0 ) )
 	{
 	    port = atoi( argv[i + 1] );
 	    i++;
-	}
-	else if( ( strcmp( argv[i], "-l" ) == 0 ) || ( strcmp( argv[i], "--log" ) == 0 ) )
-	{
-	    loglevel = 1;
 	}
 	else if( ( strcmp( argv[i], "-v" ) == 0 ) || ( strcmp( argv[i], "--verbose" ) == 0 ) )
 	{
@@ -194,36 +177,16 @@ int main( int argc, char *argv[] )
 	    fr = fork(  );
 	    if( fr != 0 )
 		continue;
-	    handle_connection( newfd, ( struct sockaddr_in * ) &remote_addr );
+	    handle_connection( newfd );
 	    _exit( 0 );
 	}
-	handle_connection( newfd, ( struct sockaddr_in * ) &remote_addr );
+	handle_connection( newfd );
     }
 }
 
-/* Cygwin doesn't like my time structures. It's on my todo list. */
-#ifndef __CYGWIN__
-static char *curtime( void )
+static void handle_connection( int fd )
 {
-    struct tm *gmt;
-    char *rv = ( char * ) smalloc( 100 );
-    time_t t = time( NULL );
-    if( ( gmt = gmtime( &t ) ) == NULL )
-	logmessage( PANIC, "gmtime() error." );
-    if( ( strftime( rv, 95, "%d/%b/%Y:%T +0000", gmt ) ) == 0 )
-	logmessage( PANIC, "strftime() error." );
-    return rv;
-}
-#else
-static char *curtime( void )
-{
-    return "-";
-}
-#endif
-
-static void handle_connection( int fd, struct sockaddr_in *remote )
-{
-    handle_request( fd, remote );
+    handle_request( fd );
 
     /* Shutdown socket */
     if( shutdown( fd, SHUT_RDWR ) == -1 )
@@ -236,18 +199,10 @@ static void handle_connection( int fd, struct sockaddr_in *remote )
 	logmessage( WARNING, "Error closing client socket." );
 }
 
-static void handle_request( int fd, struct sockaddr_in *remote )
+static void handle_request( int fd )
 {
-    int rv, c, infd, h = 0;
+    int rv;
     char inbuffer[2048];
-    char *out;
-    char *lastmod;
-    char outb[1024];
-    char *referrer = "-";
-    char *ua = "";
-    char *request = NULL;
-    char *header;		/* newline terminated header. */
-    int content_length = 0;
 
     rv = recv( fd, inbuffer, sizeof( inbuffer ), 0 );
     if( rv == -1 )
@@ -256,68 +211,11 @@ static void handle_request( int fd, struct sockaddr_in *remote )
 	return;
     }
 
-    /* Read headers and request line. */
-    for( c = 0; c < rv; c++ )
-    {
-	if( inbuffer[c] == '\n' )
-	{
-	    inbuffer[c] = '\0';
-	    if( ( c > 1 ) && ( inbuffer[c - 1] == '\r' ) )
-		inbuffer[c - 1] = '\0';
-	    if( h != 0 )
-	    {
-		header = inbuffer + h;
-		if( print_headers )
-		    printf( "%s\n", header );
-		if( strncmp( header, "Referer:", 8 ) == 0 )
-		    referrer = header;
-		if( strncmp( header, "User-Agent:", 11 ) == 0 )
-		    ua = header;
-	    }
-	    else
-	    {
-		request = inbuffer;
-		if( print_headers )
-		    printf( "%s\n", request );
-	    }
-
-	    h = c + 1;
-	}
-    }
-
-    if( request == NULL )
-    {
-	return;
-    }
-
-    logmessage( INFO, request );
-
     SAFESEND( fd, "HTTP/1.1 200 OK\r\n" );
     SAFESEND( fd, "Content-Type: text/html\r\n" );
     SAFESEND( fd, "Last-Modified: Sat, 08 Jan 1492 01:12:12 GMT\r\n" );
     SAFESEND( fd, "Content-Length: 15\r\n\r\n" );
     SAFESEND( fd, "<html> </html>\r\n" );
-
-    if( loglevel )
-	loghit( request, referrer, ua, 200, c, remote );
-}
-
-static void loghit( char *req, char *referrer, char *ua, int code, int size, struct sockaddr_in *remote )
-{
-    char *t = curtime(  );
-    char *i;
-    if( ( i = strchr( referrer, ' ' ) ) == NULL )
-	referrer = "-";
-    else
-	referrer = i + 1;
-    if( ( i = strchr( ua, ' ' ) ) == NULL )
-	ua = "-";
-    else
-	ua = i + 1;
-    printf( "%s - - [%s] - \"%s\" %d %d \"%s\" \"%s\"\n", inet_ntoa( remote->sin_addr ), t, req, code, size, referrer, ua );
-    fflush( stdout );
-    if( t[0] != '-' )
-	free( t );
 }
 
 static void logmessage( int level, char *message )
@@ -350,12 +248,4 @@ static void sigcatch( int signal )
             logmessage( WARNING, "Error closing socket." );
 	exit( 0 );
     }
-}
-
-static void *smalloc( size_t size )
-{
-    void *rv = malloc( size );
-    if( rv == NULL )
-	logmessage( PANIC, "Memory allocation error." );
-    return rv;
 }
