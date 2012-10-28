@@ -1,3 +1,5 @@
+* 10/28/12 version 0.3
+    - added kwakd.service systemd service file
 
 * 07/09/08 version 0.2
     - added init script, which will use port 80
