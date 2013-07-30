@@ -5,11 +5,12 @@ Basic installation
     make
     make install
 
-    You may want to use the file kwakd.init for
-    automatically starting/stopping/restarting
-    kwakd as a service. Copy it to the appropriate
-    location for your distribution and modify it
-    if the default port 80 is not what you want.
+    You may want to use the file kwakd.init or 
+    kwakd.service for automatically 
+    starting/stopping/restarting kwakd as a service. 
+    Copy it to the appropriate location for your 
+    distribution and modify it if the default 
+    port 80 is not what you want.
 
 Fancy installation
 ==================
