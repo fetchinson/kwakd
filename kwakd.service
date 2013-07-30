@@ -4,7 +4,7 @@ Description=Kwakd
 [Service]
 Type=simple
 PIDFile=/var/run/kwakd.pid
-ExecStart=/usr/local/bin/kwakd -p 80  
+ExecStart=kwakd -p 80  
 Restart=always
 
 [Install]
