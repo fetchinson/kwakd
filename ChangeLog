@@ -1,0 +1,13 @@
+* 07/30/13 version 0.4
+    - requests from Fedora packager:
+    - updated COPYING file
+    - binary path not hardcoded in systemd service file
+
+* 10/28/12 version 0.3
+    - added kwakd.service systemd service file
+
+* 07/09/08 version 0.2
+    - added init script, which will use port 80
+      modify it if needed
+
+* 12/31/07 initial release 0.1
