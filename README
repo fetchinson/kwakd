@@ -12,6 +12,10 @@ The script kwakd.init can be used to automatically start
 kwakd on boot. Copy it to the appropriate location for your
 distribution, typically /etc/init.d
 
+If your system uses systemd instead of the older init.d
+for starting services you may use the example service file
+kwakd.service
+
 Daniel Fetchinson <fetchinson@gmail.com>
 
 

@@ -1,3 +1,6 @@
+* 08/02/13 version 0.5
+    - adding missing kwakd.service
+
 * 07/30/13 version 0.4
     - requests from Fedora packager:
     - updated COPYING file
