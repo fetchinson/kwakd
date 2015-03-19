@@ -1,3 +1,4 @@
+* log messages to file (cmd option)
 * Something similar for https requests
 * Command line option for setting what the response should be.
 * Install to /usr/sbin so service can find it (/usr/local/bin

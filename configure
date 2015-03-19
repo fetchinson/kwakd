@@ -1954,7 +1954,7 @@ ac_config_headers="$ac_config_headers config.h"
 
 
 PACKAGE=kwakd
-VERSION=0.4
+VERSION=0.5
 
 am__api_version='1.11'
 
